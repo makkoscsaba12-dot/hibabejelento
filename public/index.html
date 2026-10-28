@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hibabejelentő</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 30px 16px;
+      background: #101827;
+      color: #f1f5f9;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 28px;
+      background: #1e293b;
+      border-radius: 16px;
+      box-shadow: 0 10px 35px #0004;
+    }
+    h1 { margin-top: 0; }
+    p { color: #cbd5e1; line-height: 1.5; }
+    label { display: block; margin: 18px 0 7px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #0f172a;
+      color: white;
+      font: inherit;
+    }
+    textarea { min-height: 130px; resize: vertical; }
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 13px;
+      border: 0;
+      border-radius: 8px;
+      background: #38bdf8;
+      color: #082f49;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { margin-top: 16px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🛠️ Hibabejelentő</h1>
+    <p>Találtál egy hibát, vagy van egy jó ötleted? Küldd el nekünk!</p>
+
+    <form id="reportForm">
+      <label for="name">Neved (nem kötelező)</label>
+      <input id="name" name="name" maxlength="80" placeholder="Névtelen">
+
+      <label for="category">Kategória</label>
+      <select id="category" name="category" required>
+        <option value="Hiba">Hiba</option>
+        <option value="Javaslat">Javaslat</option>
+        <option value="Egyéb">Egyéb</option>
+      </select>
+
+      <label for="title">Bejelentés címe</label>
+      <input id="title" name="title" maxlength="120" required placeholder="Rövid cím">
+
+      <label for="description">Részletes leírás</label>
+      <textarea id="description" name="description" minlength="5" maxlength="2000" required placeholder="Írd le, mi történt vagy mit javasolsz..."></textarea>
+
+      <div class="hidden" aria-hidden="true">
+        <label for="website">Weboldal</label>
+        <input id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button id="submitButton" type="submit">Bejelentés elküldése</button>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById("reportForm");
+    const button = document.getElementById("submitButton");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      status.textContent = "Küldés folyamatban...";
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const response = await fetch("/api/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || "Sikertelen küldés.");
+
+        status.textContent = "✅ Sikeresen elküldted a bejelentést!";
+        form.reset();
+      } catch (error) {
+        status.textContent = "❌ " + error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
